@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -18,7 +17,14 @@
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #f0f9ff;
+            background-color: #f8fafc;
+            /* Slate 50 */
+            color: #334155;
+            /* Slate 700 */
+        }
+
+        .chic-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
     </style>
 </head>
@@ -98,7 +104,7 @@
                     { id: 'c-o70-3', label: '現役並みⅢ (課税所得690万円〜)', standardBase: 252600, rate: 0.01, deductionBase: 842000, majorityCap: 140100 },
                     { id: 'c-o70-2', label: '現役並みⅡ (課税所得380万円〜)', standardBase: 167400, rate: 0.01, deductionBase: 558000, majorityCap: 93000 },
                     { id: 'c-o70-1', label: '現役並みⅠ (課税所得145万円〜)', standardBase: 80100, rate: 0.01, deductionBase: 267000, majorityCap: 44400 },
-                    { id: 'c-o70-gen', label: '一般 (年収156〜約370万円)', standardBase: 57600, rate: 0, deductionBase: 0, majorityCap: 18000 }, // Note: Assuming standard outpatient cap for consistency with prompt desire, but keeping logic
+                    { id: 'c-o70-gen', label: '一般 (年収156〜約370万円)', standardBase: 57600, rate: 0, deductionBase: 0, majorityCap: 18000 },
                     { id: 'c-o70-low2', label: '低所得Ⅱ (住民税非課税)', standardBase: 24600, rate: 0, deductionBase: 0, majorityCap: 24600 },
                     { id: 'c-o70-low1', label: '低所得Ⅰ (年金80万円以下)', standardBase: 15000, rate: 0, deductionBase: 0, majorityCap: 15000 },
                 ]
@@ -112,7 +118,6 @@
                     { id: 'r8-u70-o', label: 'オ (住民税非課税)', standardBase: 38000, rate: 0, deductionBase: 0, majorityCap: 26000 },
                 ],
                 over70: [
-                    // Assuming slight increase similar to under70 for R8
                     { id: 'r8-o70-3', label: '現役並みⅢ (課税所得690万円〜)', standardBase: 260000, rate: 0.01, deductionBase: 842000, majorityCap: 145000 },
                     { id: 'r8-o70-2', label: '現役並みⅡ (課税所得380万円〜)', standardBase: 180000, rate: 0.01, deductionBase: 558000, majorityCap: 100000 },
                     { id: 'r8-o70-1', label: '現役並みⅠ (課税所得145万円〜)', standardBase: 90000, rate: 0.01, deductionBase: 267000, majorityCap: 50000 },
@@ -125,7 +130,7 @@
                 under70: [
                     { id: 'r9-u70-a', label: 'ア (年収1160万円〜)', standardBase: 303000, rate: 0.01, deductionBase: 842000, majorityCap: 140100 },
                     { id: 'r9-u70-i', label: 'イ (年収770〜1160万円)', standardBase: 270000, rate: 0.01, deductionBase: 558000, majorityCap: 140100 },
-                    { id: 'r9-u70-u3', label: 'ウ-3 (年収600〜770万円)', standardBase: 179000, rate: 0.01, deductionBase: 400000, majorityCap: 93000 }, // deductionBase assumed estimate
+                    { id: 'r9-u70-u3', label: 'ウ-3 (年収600〜770万円)', standardBase: 179000, rate: 0.01, deductionBase: 400000, majorityCap: 93000 },
                     { id: 'r9-u70-u2', label: 'ウ-2 (年収450〜600万円)', standardBase: 120000, rate: 0.01, deductionBase: 300000, majorityCap: 60000 },
                     { id: 'r9-u70-u1', label: 'ウ-1 (年収370〜450万円)', standardBase: 85800, rate: 0.01, deductionBase: 267000, majorityCap: 44400 },
                     { id: 'r9-u70-e', label: 'エ (年収〜370万円)', standardBase: 57600, rate: 0, deductionBase: 0, majorityCap: 44400 },
@@ -148,7 +153,7 @@
         // --- Components ---
 
         const { useState, useEffect, useMemo } = React;
-        const { Calculator, ArrowRight, Wallet, TrendingDown, TrendingUp, Info, Scale, AlertCircle } = lucide;
+        const { Calculator, ArrowRight, Wallet, TrendingDown, TrendingUp, Info, Scale, AlertCircle, Check } = lucide;
 
         function App() {
             // State
@@ -177,11 +182,6 @@
 
             // Set default bracket when period or age changes
             useEffect(() => {
-                // Try to keep selection if ID exists in new list (unlikely across periods for some), or default to middle/standard
-                // Actually safer to reset to first or similar index.
-                // Let's reset to the "middle" or "standard" equivalent if possible, or just the first.
-                // For better UX, let's map indices. But IDs are different.
-                // Defaulting to the 3rd item (usually 'category U') or similar.
                 if (activeBrackets.length > 2) {
                     setIncomeBracketId(activeBrackets[2].id);
                 } else {
@@ -219,17 +219,10 @@
                 // 2. Initial Co-pay (Window Pay)
                 let coPayRate = 0.3;
                 if (age === 'over70') {
-                    // Simplified logic logic mapping
-                    // Check if "Gen-3/Present" -> 30%
-                    // We can infer from bracket label or data. 
-                    // Usually highest income >70 is 30%.
-                    // For R9 check label "現役並み"
                     if (bracket.label.includes('現役並み') || bracket.label.includes('課税所得')) {
                         coPayRate = 0.3;
                     } else {
-                        coPayRate = 0.2; // Standard for general over 70
-                        // Note: "Low income" is effectively 10% in some contexts or lower cap, but 20% window pay is standard until cap is hit. 
-                        // Actually low income over 75 is 10%, but let's stick to 20% > cap logic for simplicity unless specified.
+                        coPayRate = 0.2;
                     }
                 }
 
@@ -238,9 +231,6 @@
                 // 3. Determine Monthly Self Pay
                 let monthlySelfPay = windowPay;
                 let isCapped = false;
-
-                // Compare with Ceiling
-                // Note: For low income, the ceiling is often fixed.
 
                 if (windowPay > standardCeiling) {
                     isCapped = true;
@@ -296,162 +286,163 @@
             });
 
             return (
-                <div className="min-h-screen p-4 md:p-8">
-                    <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
-                        <header className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6 text-white flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <i data-lucide="calculator" className="w-8 h-8"></i>
-                                <h1 className="text-2xl font-bold">治療費シミュレーター</h1>
-                            </div>
-                            {period !== 'current' && (
-                                <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
-                                    {PERIODS.find(p => p.id === period).label} 試算中
+                <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
+                    <div className="w-full max-w-7xl bg-white rounded-3xl chic-shadow overflow-hidden border border-slate-200">
+                        {/* Header */}
+                        <header className="bg-slate-800 p-6 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-slate-700/50 rounded-xl">
+                                    <i data-lucide="calculator" className="w-6 h-6 text-slate-100"></i>
                                 </div>
-                            )}
+                                <h1 className="text-xl font-medium tracking-wide">治療費シミュレーター</h1>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                {period !== 'current' && (
+                                    <div className="px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-200 border border-slate-600 tracking-wider">
+                                        {PERIODS.find(p => p.id === period).label} 試算中
+                                    </div>
+                                )}
+                            </div>
                         </header>
 
                         <div className="grid md:grid-cols-12 gap-0">
                             {/* LEFT COLUMN: Inputs */}
-                            <div className="md:col-span-4 lg:col-span-5 bg-slate-50 p-6 border-r border-slate-200 overflow-y-auto max-h-screen">
-                                <h2 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                    <i data-lucide="settings" className="w-5 h-5"></i>
-                                    シミュレーション条件
+                            <div className="md:col-span-4 lg:col-span-5 bg-slate-50 p-6 md:p-8 border-r border-slate-200 overflow-y-auto max-h-[calc(100vh-100px)]">
+                                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <i data-lucide="settings" className="w-4 h-4"></i>
+                                    Configuration
                                 </h2>
 
                                 <div className="space-y-8">
 
-                                    {/* System Period Selection (NEW) */}
-                                    <section className="bg-white p-4 rounded-lg border border-indigo-100 shadow-sm">
-                                        <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                                            <i data-lucide="scale" className="w-4 h-4"></i>
-                                            制度適用時期
-                                        </h3>
-                                        <div className="flex flex-col gap-3">
+                                    {/* System Period Selection */}
+                                    <section>
+                                        <h3 className="text-sm font-semibold text-slate-700 mb-3">制度適用時期</h3>
+                                        <div className="space-y-2">
                                             {PERIODS.map(p => (
-                                                <label key={p.id} className={`flex items-center p-2 rounded cursor-pointer transition-colors ${period === p.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}`}>
-                                                    <input type="radio" className="form-radio text-indigo-600 h-4 w-4"
-                                                        checked={period === p.id}
-                                                        onChange={() => setPeriod(p.id)} />
-                                                    <span className={`ml-2 text-sm ${period === p.id ? 'font-bold text-indigo-700' : 'text-slate-600'}`}>{p.label}</span>
-                                                </label>
+                                                <button key={p.id}
+                                                    onClick={() => setPeriod(p.id)}
+                                                    className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center justify-between group ${period === p.id
+                                                        ? 'bg-slate-800 border-slate-800 text-white shadow-md'
+                                                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                                                        }`}>
+                                                    <span className="text-sm font-medium">{p.label}</span>
+                                                    {period === p.id && <i data-lucide="check" className="w-4 h-4 text-emerald-400"></i>}
+                                                </button>
                                             ))}
                                         </div>
                                     </section>
 
                                     {/* Patient Info */}
                                     <section>
-                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">患者情報</h3>
-
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">年齢区分</label>
-                                            <div className="flex gap-4">
-                                                <label className="inline-flex items-center">
-                                                    <input type="radio" className="form-radio text-blue-600"
-                                                        checked={ageGroup === 'under70'}
-                                                        onChange={() => setAgeGroup('under70')} />
-                                                    <span className="ml-2 text-sm text-slate-700">69歳以下</span>
-                                                </label>
-                                                <label className="inline-flex items-center">
-                                                    <input type="radio" className="form-radio text-blue-600"
-                                                        checked={ageGroup === 'over70'}
-                                                        onChange={() => setAgeGroup('over70')} />
-                                                    <span className="ml-2 text-sm text-slate-700">70歳以上</span>
-                                                </label>
+                                        <h3 className="text-sm font-semibold text-slate-700 mb-3">患者情報</h3>
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-2">年齢区分</label>
+                                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                                    <button onClick={() => setAgeGroup('under70')}
+                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${ageGroup === 'under70' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                        69歳以下
+                                                    </button>
+                                                    <button onClick={() => setAgeGroup('over70')}
+                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${ageGroup === 'over70' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                        70歳以上
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">所得区分</label>
-                                            <select className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 text-sm p-2 border bg-white"
-                                                value={incomeBracketId}
-                                                onChange={(e) => setIncomeBracketId(e.target.value)}>
-                                                {activeBrackets.map(b => (
-                                                    <option key={b.id} value={b.id}>{b.label}</option>
-                                                ))}
-                                            </select>
-                                            <p className="text-xs text-slate-400 mt-1">※選択した時期・年齢に応じた区分が表示されます</p>
-                                        </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-2">所得区分</label>
+                                                <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 focus:border-slate-400 outline-none transition-all text-slate-700"
+                                                    value={incomeBracketId}
+                                                    onChange={(e) => setIncomeBracketId(e.target.value)}>
+                                                    {activeBrackets.map(b => (
+                                                        <option key={b.id} value={b.id}>{b.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">適用期間</label>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="inline-flex items-center">
-                                                    <input type="radio" className="form-radio text-blue-600"
-                                                        checked={!isMajority}
-                                                        onChange={() => setIsMajority(false)} />
-                                                    <span className="ml-2 text-sm text-slate-700">初年度 (標準)</span>
-                                                </label>
-                                                <label className="inline-flex items-center">
-                                                    <input type="radio" className="form-radio text-blue-600"
-                                                        checked={isMajority}
-                                                        onChange={() => setIsMajority(true)} />
-                                                    <span className="ml-2 text-sm text-slate-700">2年目以降 (多数回該当)</span>
-                                                </label>
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-2">適用期間</label>
+                                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                                    <button onClick={() => setIsMajority(false)}
+                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                        初年度
+                                                    </button>
+                                                    <button onClick={() => setIsMajority(true)}
+                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                        2年目以降
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
 
                                     {/* Current Drug */}
                                     <section>
-                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">現在の薬剤 (Before)</h3>
-                                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">薬剤名</label>
-                                                <select className="w-full text-sm p-2 border rounded"
+                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 text-xs">現在の薬剤 (Before)</h3>
+                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-500 mb-2">薬剤名</label>
+                                                <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
                                                     value={currentDrugId}
                                                     onChange={(e) => setCurrentDrugId(e.target.value)}>
                                                     {DRUG_DATA.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">処方量/頻度</label>
-                                                <select className="w-full text-sm p-2 border rounded"
-                                                    value={currentDrugOptionIndex}
-                                                    onChange={(e) => setCurrentDrugOptionIndex(parseInt(e.target.value))}>
-                                                    {currentDrug.options.map((opt, idx) => (
-                                                        <option key={idx} value={idx}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">年間回数</label>
-                                                <input type="number" className="w-full p-2 border rounded text-right"
-                                                    value={currentManualCount}
-                                                    onChange={(e) => setCurrentManualCount(parseInt(e.target.value) || 0)} />
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-500 mb-2">処方量/頻度</label>
+                                                    <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
+                                                        value={currentDrugOptionIndex}
+                                                        onChange={(e) => setCurrentDrugOptionIndex(parseInt(e.target.value))}>
+                                                        {currentDrug.options.map((opt, idx) => (
+                                                            <option key={idx} value={idx}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-500 mb-2">年間回数</label>
+                                                    <input type="number" className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-right text-slate-700 outline-none"
+                                                        value={currentManualCount}
+                                                        onChange={(e) => setCurrentManualCount(parseInt(e.target.value) || 0)} />
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
 
                                     {/* Target Drug */}
                                     <section>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">切替後の薬剤 (After)</h3>
-                                            <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-bold">New</span>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider text-xs">切替後の薬剤 (After)</h3>
+                                            <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">New</span>
                                         </div>
-                                        <div className="bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm">
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">薬剤名</label>
-                                                <input type="text" className="w-full p-2 border border-green-300 rounded"
+                                        <div className="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-medium text-emerald-700/70 mb-2">薬剤名</label>
+                                                <input type="text" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-emerald-900 outline-none transition-all placeholder-emerald-300"
                                                     value={targetDrugName}
                                                     onChange={(e) => setTargetDrugName(e.target.value)} />
                                             </div>
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">薬剤費(10割)</label>
-                                                <input type="number" className="w-full p-2 border border-green-300 rounded text-right"
-                                                    value={targetDrugCost}
-                                                    onChange={(e) => setTargetDrugCost(e.target.value)} />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="block text-xs font-medium text-slate-500 mb-1">年間回数</label>
-                                                <input type="number" className="w-full p-2 border border-green-300 rounded text-right"
-                                                    value={targetDrugCount}
-                                                    onChange={(e) => setTargetDrugCount(e.target.value)} />
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-emerald-700/70 mb-2">薬剤費(10割)</label>
+                                                    <input type="number" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-right text-emerald-900 outline-none"
+                                                        value={targetDrugCost}
+                                                        onChange={(e) => setTargetDrugCost(e.target.value)} />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-emerald-700/70 mb-2">年間回数</label>
+                                                    <input type="number" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-right text-emerald-900 outline-none"
+                                                        value={targetDrugCount}
+                                                        onChange={(e) => setTargetDrugCount(e.target.value)} />
+                                                </div>
                                             </div>
                                             <div className="flex items-center">
-                                                <input type="checkbox" id="mgmtFee" className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                                <input type="checkbox" id="mgmtFee" className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
                                                     checked={targetHasManagementFee}
                                                     onChange={(e) => setTargetHasManagementFee(e.target.checked)} />
-                                                <label htmlFor="mgmtFee" className="ml-2 text-sm text-slate-700">
+                                                <label htmlFor="mgmtFee" className="ml-2 text-xs font-medium text-emerald-800">
                                                     在宅自己注射指導管理料を含める (+6,500円)
                                                 </label>
                                             </div>
@@ -462,144 +453,105 @@
 
                             {/* RIGHT COLUMN: Results */}
                             <div className="md:col-span-8 lg:col-span-7 p-6 md:p-10 bg-white">
-                                <h2 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2">
-                                    <i data-lucide="wallet" className="w-6 h-6 text-blue-600"></i>
-                                    シミュレーション結果
+                                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-8 flex items-center gap-2">
+                                    <i data-lucide="wallet" className="w-4 h-4"></i>
+                                    Simulation Result
                                 </h2>
 
                                 {/* Reform Notice */}
                                 {period !== 'current' && (
-                                    <div className="mb-6 bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r">
-                                        <div className="flex">
-                                            <div className="flex-shrink-0">
-                                                <i data-lucide="alert-circle" className="h-5 w-5 text-indigo-500"></i>
-                                            </div>
-                                            <div className="ml-3">
-                                                <p className="text-sm text-indigo-700">
-                                                    <span className="font-bold">{PERIODS.find(p => p.id === period).label}</span> に基づく試算結果を表示しています。
-                                                    <br />
-                                                    {period === 'r9' && "※所得区分の細分化により、一部の所得層で上限額が変動しています。"}
-                                                    {period === 'r8' && "※定額負担金の引き上げ案を反映しています。"}
-                                                </p>
-                                            </div>
+                                    <div className="mb-8 bg-slate-50 border border-slate-200 p-4 rounded-lg flex items-start gap-3">
+                                        <i data-lucide="info" className="w-5 h-5 text-slate-400 mt-0.5"></i>
+                                        <div className="text-sm text-slate-600 leading-relaxed">
+                                            <span className="font-semibold text-slate-800">{PERIODS.find(p => p.id === period).label}</span> に基づく試算結果を表示しています。
+                                            <br />
+                                            {period === 'r9' && "※所得区分の細分化により、一部の所得層で上限額が変動しています。"}
+                                            {period === 'r8' && "※定額負担金の引き上げ案を反映しています。"}
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Hero Result */}
-                                <div className={`p-6 rounded-2xl mb-8 flex flex-col md:flex-row items-center justify-between shadow-lg border ${annualizedDiff > 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' : 'bg-gradient-to-br from-red-50 to-red-100 border-red-200'}`}>
-                                    <div className="text-center md:text-left mb-4 md:mb-0">
-                                        <p className="text-slate-600 font-medium mb-1">年間自己負担額の差額</p>
-                                        <div className="flex items-baseline gap-1 justify-center md:justify-start">
-                                            <span className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-800">
-                                                {Math.abs(annualizedDiff).toLocaleString()}
-                                            </span>
-                                            <span className="text-lg text-slate-600 font-medium">円</span>
+                                <div className={`relative p-8 rounded-2xl mb-10 transition-all duration-300 ${annualizedDiff > 0 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'}`}>
+                                    <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
+                                        <div>
+                                            <p className={`text-sm font-medium mb-2 ${annualizedDiff > 0 ? 'text-slate-300' : 'text-slate-500'}`}>年間自己負担額の差額</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-5xl md:text-6xl font-light tracking-tighter">
+                                                    {Math.abs(annualizedDiff).toLocaleString()}
+                                                </span>
+                                                <span className="text-lg font-light opacity-60">円</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className={`px-6 py-2 rounded-full font-bold text-lg flex items-center gap-2 shadow-md ${annualizedDiff > 0 ? 'bg-blue-600 text-white' : 'bg-red-500 text-white'}`}>
-                                        {annualizedDiff > 0 ? (
-                                            <>
-                                                <i data-lucide="trending-down" className="w-5 h-5"></i>
-                                                安くなります
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i data-lucide="trending-up" className="w-5 h-5"></i>
-                                                高くなります
-                                            </>
-                                        )}
+
+                                        <div className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${annualizedDiff > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'}`}>
+                                            {annualizedDiff > 0 ? (
+                                                <>
+                                                    <i data-lucide="trending-down" className="w-4 h-4"></i>
+                                                    {Math.abs(annualizedDiff).toLocaleString()}円 安くなります
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i data-lucide="trending-up" className="w-4 h-4"></i>
+                                                    {Math.abs(annualizedDiff).toLocaleString()}円 高くなります
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Comparison Table */}
-                                <div className="overflow-hidden border border-slate-200 rounded-xl mb-6 shadow-sm">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-slate-50 text-slate-500 font-medium">
-                                            <tr>
-                                                <th className="px-6 py-4"></th>
-                                                <th className="px-6 py-4 text-center">
-                                                    <div className="inline-block px-3 py-1 bg-slate-200 rounded-full text-slate-700 text-xs font-bold">現在 (Before)</div>
-                                                    <div className="mt-2 text-base font-bold text-slate-800">{currentDrug.name}</div>
-                                                </th>
-                                                <th className="px-6 py-4 text-center">
-                                                    <div className="inline-block px-3 py-1 bg-green-100 rounded-full text-green-700 text-xs font-bold">切替後 (After)</div>
-                                                    <div className="mt-2 text-base font-bold text-green-700">{targetDrugName}</div>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            <tr className="hover:bg-slate-50/50">
-                                                <td className="px-6 py-4 font-medium text-slate-600">年間自己負担額</td>
-                                                <td className="px-6 py-4 text-center text-xl font-bold text-slate-800">{currentResult.annualSelfPay.toLocaleString()}円</td>
-                                                <td className="px-6 py-4 text-center text-xl font-bold text-green-600">{targetResult.annualSelfPay.toLocaleString()}円</td>
-                                            </tr>
-                                            <tr className="hover:bg-slate-50/50">
-                                                <td className="px-6 py-4 text-slate-500">
-                                                    1回あたり自己負担
-                                                    <span className="block text-xs text-slate-400 font-normal mt-0.5">※高額療養費適用後</span>
-                                                </td>
-                                                <td className="px-6 py-4 text-center font-medium text-slate-700">{currentResult.monthlySelfPay.toLocaleString()}円</td>
-                                                <td className="px-6 py-4 text-center font-medium text-slate-700">{targetResult.monthlySelfPay.toLocaleString()}円</td>
-                                            </tr>
-                                            <tr className="hover:bg-slate-50/50">
-                                                <td className="px-6 py-4 text-slate-500">
-                                                    制度適用
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {currentResult.isCapped ? (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                            上限適用
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                                            対象外 (窓口負担のみ)
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {targetResult.isCapped ? (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                            上限適用
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                                            対象外 (窓口負担のみ)
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            <tr className="hover:bg-slate-50/50">
-                                                <td className="px-6 py-4 text-slate-500">
-                                                    年間投与回数
-                                                </td>
-                                                <td className="px-6 py-4 text-center text-slate-600 text-sm">{currentManualCount}回</td>
-                                                <td className="px-6 py-4 text-center text-slate-600 text-sm">{targetDrugCount}回</td>
-                                            </tr>
-                                        </tbody>
-                                        <tfoot className="bg-slate-50 border-t border-slate-200">
-                                            <tr>
-                                                <td className="px-6 py-3 text-xs text-slate-400">
-                                                    適用区分
-                                                </td>
-                                                <td colSpan="2" className="px-6 py-3 text-center text-xs text-slate-500">
-                                                    {activeBrackets.find(b => b.id === incomeBracketId)?.label || '-'}
-                                                </td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
+                                <div className="mb-8">
+                                    <div className="grid grid-cols-3 text-xs uppercase tracking-wider font-semibold text-slate-400 border-b border-slate-100 pb-2 mb-4">
+                                        <div>Item</div>
+                                        <div className="text-center">Current</div>
+                                        <div className="text-center text-emerald-600">New</div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                            <div className="font-medium text-slate-700">年間自己負担額</div>
+                                            <div className="text-center text-xl font-light text-slate-600">{currentResult.annualSelfPay.toLocaleString()}円</div>
+                                            <div className="text-center text-xl font-bold text-emerald-600">{targetResult.annualSelfPay.toLocaleString()}円</div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                            <div>
+                                                <div className="text-sm font-medium text-slate-600">1回あたり自己負担</div>
+                                                <div className="text-xs text-slate-400 mt-0.5 scale-90 origin-left">※高額療養費適用後</div>
+                                            </div>
+                                            <div className="text-center text-sm font-medium text-slate-500">{currentResult.monthlySelfPay.toLocaleString()}円</div>
+                                            <div className="text-center text-sm font-medium text-slate-500">{targetResult.monthlySelfPay.toLocaleString()}円</div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                            <div className="text-sm font-medium text-slate-600">制度適用</div>
+                                            <div className="text-center">
+                                                {currentResult.isCapped ? (
+                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                        上限適用
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                )}
+                                            </div>
+                                            <div className="text-center">
+                                                {targetResult.isCapped ? (
+                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                        上限適用
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="bg-amber-50 rounded-lg p-4 border border-amber-200 text-sm text-amber-800 flex gap-3">
-                                    <i data-lucide="info" className="w-5 h-5 flex-shrink-0 text-amber-600"></i>
-                                    <div>
-                                        <p className="font-bold mb-1">ご注意</p>
-                                        <p className="leading-relaxed">
-                                            この試算は概算です。実際の窓口負担額は、他の医療機関での受診状況、入院・外来の区別、世帯合算、自治体の独自助成などにより異なる場合があります。
-                                            正確な金額はご加入の健康保険組合または医療機関の窓口でご確認ください。<br />
-                                            ※厚労省の制度改正案に基づく試算値であり、今後の国会審議等により変更される可能性があります。
-                                        </p>
-                                    </div>
+                                <div className="bg-slate-50 rounded-lg p-6 border border-slate-100 text-xs text-slate-500 leading-relaxed italic">
+                                    <p className="mb-2 font-semibold not-italic">免責事項</p>
+                                    この試算は概算です。実際の窓口負担額は、他の医療機関での受診状況、入院・外来の区別、世帯合算、自治体の独自助成などにより異なる場合があります。
+                                    正確な金額はご加入の健康保険組合または医療機関の窓口でご確認ください。
                                 </div>
 
                             </div>
