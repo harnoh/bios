@@ -56,7 +56,7 @@
                 id: 'fasenra',
                 name: 'ファセンラ',
                 options: [
-                    { label: '1本処方【6回/年】', cost: 335309, annualCount: 6 },
+                    { label: '2ヶ月毎に1本投与【6回/年】', cost: 335309, annualCount: 6 },
                 ],
                 hasManagementFee: false
             },
@@ -76,7 +76,7 @@
                 options: [
                     { label: '1本処方【12回/年】', cost: 159891, annualCount: 12 },
                     { label: '2本処方【6回/年】', cost: 319782, annualCount: 6 },
-                    { label: '3本処方【12回/年】', cost: 479673, annualCount: 12 },
+                    { label: '3本処方【4回/年】', cost: 479673, annualCount: 4 },
                 ],
                 hasManagementFee: true
             },
@@ -84,7 +84,7 @@
                 id: 'exidencer',
                 name: 'エキシデンサー',
                 options: [
-                    { label: '1回処方【2回/年】', cost: 1000000, annualCount: 2 },
+                    { label: '26週毎に1本投与【2回/年】', cost: 1000000, annualCount: 2 },
                 ],
                 hasManagementFee: false
             }
@@ -493,7 +493,7 @@
                                                         setCurrentDrugId(newId);
                                                         setCurrentDrugOptionIndex(0); // Reset option
                                                     }}>
-                                                    {DRUG_DATA.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                                    {DRUG_DATA.filter(d => d.id !== 'exidencer').map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                                 </select>
                                             </div>
                                             <div className="grid grid-cols-1 gap-3">
