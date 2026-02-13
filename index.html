@@ -494,7 +494,16 @@
                                                 <label className="block text-xs font-medium text-slate-500 mb-2">薬剤名</label>
                                                 <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
                                                     value={currentDrugId}
-                                                    onChange={(e) => setCurrentDrugId(e.target.value)}>
+                                                    onChange={(e) => {
+                                                        const newId = e.target.value;
+                                                        setCurrentDrugId(newId);
+                                                        setCurrentDrugOptionIndex(0); // Reset option
+                                                        // Also reset manual count to the first option of new drug
+                                                        const newDrug = DRUG_DATA.find(d => d.id === newId);
+                                                        if (newDrug && newDrug.options[0]) {
+                                                            setCurrentManualCount(newDrug.options[0].annualCount);
+                                                        }
+                                                    }}>
                                                     {DRUG_DATA.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                                 </select>
                                             </div>
