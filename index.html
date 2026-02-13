@@ -212,6 +212,19 @@
                 }
             }, [period, ageGroup]);
 
+            // Auto-update target cost and fee based on name input
+            useEffect(() => {
+                const drug = DRUG_DATA.find(d => targetDrugName.includes(d.name));
+                if (drug) {
+                    // Use the first option cost by default for simplicity
+                    // Note: If drug has variations (e.g. Nucala 100mg vs 300mg), this might need refinement
+                    // but without UI selector, best guess is the primary one.
+                    if (drug.options[0]) {
+                        setTargetDrugCost(drug.options[0].cost);
+                    }
+                }
+            }, [targetDrugName]);
+
 
 
             // Helper to calculation
@@ -524,20 +537,13 @@
                                                     value={targetDrugName}
                                                     onChange={(e) => setTargetDrugName(e.target.value)} />
                                             </div>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-emerald-700/70 mb-2">薬剤費(10割)</label>
-                                                    <input type="number" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-right text-emerald-900 outline-none"
-                                                        value={targetDrugCost}
-                                                        onChange={(e) => setTargetDrugCost(e.target.value)} />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-emerald-700/70 mb-2">年間回数</label>
-                                                    <input type="number" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-right text-emerald-900 outline-none"
-                                                        value={targetDrugCount}
-                                                        onChange={(e) => setTargetDrugCount(parseInt(e.target.value) || 0)} />
-                                                </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-emerald-700/70 mb-2">年間回数</label>
+                                                <input type="number" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-right text-emerald-900 outline-none"
+                                                    value={targetDrugCount}
+                                                    onChange={(e) => setTargetDrugCount(parseInt(e.target.value) || 0)} />
                                             </div>
+
                                             {['ヌーカラ', 'デュピクセント', 'テゼスパイア'].some(d => targetDrugName.includes(d)) && (
                                                 <div className="flex items-center">
                                                     <input type="checkbox" id="mgmtFee" className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
