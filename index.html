@@ -379,7 +379,8 @@
             );
 
             // Calculate Target (After)
-            const targetOneTimeCost = parseInt(targetDrugCost) + (targetHasManagementFee ? MANAGEMENT_FEE : 0);
+            const isTargetManagementFeeApplicable = ['ヌーカラ', 'デュピクセント', 'テゼスパイア'].some(d => targetDrugName.includes(d));
+            const targetOneTimeCost = parseInt(targetDrugCost) + ((isTargetManagementFeeApplicable && targetHasManagementFee) ? MANAGEMENT_FEE : 0);
             const targetResult = calculateCost(
                 targetOneTimeCost,
                 targetDrugCount,
@@ -555,14 +556,16 @@
                                                         onChange={(e) => setTargetDrugCount(parseInt(e.target.value) || 0)} />
                                                 </div>
                                             </div>
-                                            <div className="flex items-center">
-                                                <input type="checkbox" id="mgmtFee" className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
-                                                    checked={targetHasManagementFee}
-                                                    onChange={(e) => setTargetHasManagementFee(e.target.checked)} />
-                                                <label htmlFor="mgmtFee" className="ml-2 text-xs font-medium text-emerald-800">
-                                                    在宅自己注射指導管理料を含める (+6,500円)
-                                                </label>
-                                            </div>
+                                            {['ヌーカラ', 'デュピクセント', 'テゼスパイア'].some(d => targetDrugName.includes(d)) && (
+                                                <div className="flex items-center">
+                                                    <input type="checkbox" id="mgmtFee" className="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 border-gray-300"
+                                                        checked={targetHasManagementFee}
+                                                        onChange={(e) => setTargetHasManagementFee(e.target.checked)} />
+                                                    <label htmlFor="mgmtFee" className="ml-2 text-xs font-medium text-emerald-800">
+                                                        在宅自己注射指導管理料を含める (+6,500円)
+                                                    </label>
+                                                </div>
+                                            )}
                                         </div>
                                     </section>
                                 </div>
