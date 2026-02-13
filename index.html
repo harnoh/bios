@@ -31,6 +31,16 @@
 
 <body>
     <div id="root"></div>
+    <div id="error-display"
+        style="position:fixed;top:0;left:0;width:100%;background:red;color:white;padding:20px;z-index:9999;display:none;">
+    </div>
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            var display = document.getElementById('error-display');
+            display.style.display = 'block';
+            display.innerHTML += '<p>Error: ' + message + ' at ' + source + ':' + lineno + '</p>';
+        };
+    </script>
 
     <script type="text/babel">
         // --- Data Definitions (v2) ---
