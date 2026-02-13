@@ -189,7 +189,6 @@
             // Current Drug State
             const [currentDrugId, setCurrentDrugId] = useState('nucala');
             const [currentDrugOptionIndex, setCurrentDrugOptionIndex] = useState(2);
-            const [currentManualCount, setCurrentManualCount] = useState(12);
 
             // Target Drug State (After)
             const [targetDrugName, setTargetDrugName] = useState('エキシデンサー');
@@ -213,13 +212,7 @@
                 }
             }, [period, ageGroup]);
 
-            // Sync manual count and option
-            useEffect(() => {
-                const drug = DRUG_DATA.find(d => d.id === currentDrugId);
-                if (drug && drug.options[currentDrugOptionIndex]) {
-                    setCurrentManualCount(drug.options[currentDrugOptionIndex].annualCount);
-                }
-            }, [currentDrugId, currentDrugOptionIndex]);
+
 
             // Helper to calculation
             const calculateCost = (totalMedicalCost100, countInput, p, age, bracketId, majorityMode) => {
@@ -371,7 +364,7 @@
 
             const currentResult = calculateCost(
                 currentOneTimeCost,
-                currentManualCount,
+                currentOption.annualCount,
                 period,
                 ageGroup,
                 incomeBracketId,
@@ -499,16 +492,11 @@
                                                         const newId = e.target.value;
                                                         setCurrentDrugId(newId);
                                                         setCurrentDrugOptionIndex(0); // Reset option
-                                                        // Also reset manual count to the first option of new drug
-                                                        const newDrug = DRUG_DATA.find(d => d.id === newId);
-                                                        if (newDrug && newDrug.options[0]) {
-                                                            setCurrentManualCount(newDrug.options[0].annualCount);
-                                                        }
                                                     }}>
                                                     {DRUG_DATA.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 gap-3">
                                                 <div>
                                                     <label className="block text-xs font-medium text-slate-500 mb-2">処方量/頻度</label>
                                                     <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
@@ -518,12 +506,6 @@
                                                             <option key={idx} value={idx}>{opt.label}</option>
                                                         ))}
                                                     </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-500 mb-2">年間回数</label>
-                                                    <input type="number" className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-right text-slate-700 outline-none"
-                                                        value={currentManualCount}
-                                                        onChange={(e) => setCurrentManualCount(parseInt(e.target.value) || 0)} />
                                                 </div>
                                             </div>
                                         </div>
