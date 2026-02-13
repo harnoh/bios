@@ -191,8 +191,11 @@
             const [currentDrugOptionIndex, setCurrentDrugOptionIndex] = useState(2);
 
             // Target Drug State (After)
-            const [targetDrugName, setTargetDrugName] = useState('エキシデンサー');
-            const [targetDrugCost, setTargetDrugCost] = useState(1000000); // 10割
+            // Target Drug State (After) - Locked to Exidencer
+            // const [targetDrugName, setTargetDrugName] = useState('エキシデンサー');
+            // const [targetDrugCost, setTargetDrugCost] = useState(1000000); // Fixed
+            const targetDrugName = 'エキシデンサー';
+            const targetDrugCost = 1000000;
             const [targetDrugCount, setTargetDrugCount] = useState(2);
             const [targetHasManagementFee, setTargetHasManagementFee] = useState(true);
 
@@ -212,18 +215,7 @@
                 }
             }, [period, ageGroup]);
 
-            // Auto-update target cost and fee based on name input
-            useEffect(() => {
-                const drug = DRUG_DATA.find(d => targetDrugName.includes(d.name));
-                if (drug) {
-                    // Use the first option cost by default for simplicity
-                    // Note: If drug has variations (e.g. Nucala 100mg vs 300mg), this might need refinement
-                    // but without UI selector, best guess is the primary one.
-                    if (drug.options[0]) {
-                        setTargetDrugCost(drug.options[0].cost);
-                    }
-                }
-            }, [targetDrugName]);
+
 
 
 
@@ -533,9 +525,9 @@
                                         <div className="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 space-y-4">
                                             <div>
                                                 <label className="block text-xs font-medium text-emerald-700/70 mb-2">薬剤名</label>
-                                                <input type="text" className="w-full text-sm p-2.5 bg-white border-emerald-200 border rounded-lg focus:ring-2 focus:ring-emerald-100 text-emerald-900 outline-none transition-all placeholder-emerald-300"
-                                                    value={targetDrugName}
-                                                    onChange={(e) => setTargetDrugName(e.target.value)} />
+                                                <div className="w-full text-sm p-3 bg-white border border-emerald-200 rounded-lg text-emerald-900 font-medium">
+                                                    エキシデンサー
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-emerald-700/70 mb-2">年間回数</label>
