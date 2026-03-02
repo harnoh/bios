@@ -230,7 +230,7 @@
 
 
             // Helper to calculation
-            const calculateCost = (totalMedicalCost100, countInput, p, age, bracketId, majorityMode) => {
+            const calculateCost = (totalMedicalCost100, countInput, p, age, bracketId, majorityMode, isExidencerTransition = false) => {
                 const count = parseInt(countInput) || 0;
                 const brackets = getBrackets(p, age);
                 const bracket = brackets.find(b => b.id === bracketId);
@@ -285,6 +285,8 @@
                 // If annualCount < 3, they never reach majority cap, so start with 0.
                 let highCostMonthCount = (majorityMode && count >= 3) ? 3 : 0;
 
+                let adminCount = 0;
+
                 // Simulate 12 months
                 for (let m = 1; m <= 12; m++) {
                     // Determine if drug is administered this month
@@ -317,6 +319,8 @@
                         continue;
                     }
 
+                    adminCount++;
+
                     // Calculate Monthly Cost for this month
                     // 1. Standard Ceiling
                     let currentStandardCeiling = bracket.standardBase;
@@ -333,21 +337,30 @@
                     if (currentWindowPay > currentStandardCeiling) {
                         // High Cost Medical Care System Applies
 
-                        // Check for Majority Cap (4th time onwards)
-                        // Note: The count increments *after* this month if this month is high cost.
-                        // However, for the "4th time", the low price applies TO this 4th time.
-                        // So we check: is this going to be the 4th+ high cost month?
-                        // BUT, to be a "high cost month", it must exceed the STANDARD ceiling first.
-
-                        // Increment potential count
-                        highCostMonthCount++;
-
-                        if (highCostMonthCount >= 4) {
-                            monthlySelfPay = bracket.majorityCap;
+                        if (isExidencerTransition) {
+                            if (adminCount === 1) {
+                                monthlySelfPay = bracket.majorityCap;
+                            } else {
+                                monthlySelfPay = currentStandardCeiling;
+                            }
+                            isCapped = true;
                         } else {
-                            monthlySelfPay = currentStandardCeiling;
+                            // Check for Majority Cap (4th time onwards)
+                            // Note: The count increments *after* this month if this month is high cost.
+                            // However, for the "4th time", the low price applies TO this 4th time.
+                            // So we check: is this going to be the 4th+ high cost month?
+                            // BUT, to be a "high cost month", it must exceed the STANDARD ceiling first.
+
+                            // Increment potential count
+                            highCostMonthCount++;
+
+                            if (highCostMonthCount >= 4) {
+                                monthlySelfPay = bracket.majorityCap;
+                            } else {
+                                monthlySelfPay = currentStandardCeiling;
+                            }
+                            isCapped = true; // Flag at least one month was capped
                         }
-                        isCapped = true; // Flag at least one month was capped
                     }
 
                     monthlySelfPay = Math.floor(monthlySelfPay);
@@ -389,13 +402,17 @@
             // Calculate Target (After)
             const isTargetManagementFeeApplicable = ['ヌーカラ', 'デュピクセント', 'テゼスパイア'].some(d => targetDrugName.includes(d));
             const targetOneTimeCost = parseInt(targetDrugCost) + ((isTargetManagementFeeApplicable && targetHasManagementFee) ? MANAGEMENT_FEE : 0);
+            
+            const isExidencerTransition = isMajority && targetDrugName.includes('エキシデンサー') && currentOption.annualCount >= 3;
+
             const targetResult = calculateCost(
                 targetOneTimeCost,
                 targetDrugCount,
                 period,
                 ageGroup,
                 incomeBracketId,
-                isMajority
+                isMajority,
+                isExidencerTransition
             );
 
             const annualizedDiff = currentResult.annualSelfPay - targetResult.annualSelfPay;
