@@ -128,9 +128,9 @@
                     { id: 'r8-u70-o', label: 'オ (住民税非課税)', standardBase: 38000, rate: 0, deductionBase: 0, majorityCap: 26000 },
                 ],
                 over70: [
-                    { id: 'r8-o70-3', label: '現役並みⅢ (課税所得690万円〜)', standardBase: 260000, rate: 0.01, deductionBase: 842000, majorityCap: 145000 },
-                    { id: 'r8-o70-2', label: '現役並みⅡ (課税所得380万円〜)', standardBase: 180000, rate: 0.01, deductionBase: 558000, majorityCap: 100000 },
-                    { id: 'r8-o70-1', label: '現役並みⅠ (課税所得145万円〜)', standardBase: 90000, rate: 0.01, deductionBase: 267000, majorityCap: 50000 },
+                    { id: 'r8-o70-3', label: '現役並みⅢ (年収690万円〜)', standardBase: 260000, rate: 0.01, deductionBase: 842000, majorityCap: 145000 },
+                    { id: 'r8-o70-2', label: '現役並みⅡ (年収380万円〜)', standardBase: 180000, rate: 0.01, deductionBase: 558000, majorityCap: 100000 },
+                    { id: 'r8-o70-1', label: '現役並みⅠ (年収145万円〜)', standardBase: 90000, rate: 0.01, deductionBase: 267000, majorityCap: 50000 },
                     { id: 'r8-o70-gen', label: '一般 (年収156〜約370万円)', standardBase: 65000, rate: 0, deductionBase: 0, majorityCap: 19000 },
                     { id: 'r8-o70-low2', label: '低所得Ⅱ (住民税非課税)', standardBase: 26000, rate: 0, deductionBase: 0, majorityCap: 26000 },
                     { id: 'r8-o70-low1', label: '低所得Ⅰ (年金80万円以下)', standardBase: 16000, rate: 0, deductionBase: 0, majorityCap: 16000 },
@@ -402,7 +402,7 @@
             // Calculate Target (After)
             const isTargetManagementFeeApplicable = ['ヌーカラ', 'デュピクセント', 'テゼスパイア'].some(d => targetDrugName.includes(d));
             const targetOneTimeCost = parseInt(targetDrugCost) + ((isTargetManagementFeeApplicable && targetHasManagementFee) ? MANAGEMENT_FEE : 0);
-            
+
             const isExidencerTransition = isMajority && targetDrugName.includes('エキシデンサー') && currentOption.annualCount >= 3;
 
             const targetResult = calculateCost(
