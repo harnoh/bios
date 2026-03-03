@@ -195,6 +195,7 @@
             const [ageGroup, setAgeGroup] = useState('under70'); // 'under70' | 'over70'
             const [incomeBracketId, setIncomeBracketId] = useState('');
             const [isMajority, setIsMajority] = useState(false); // false=初年度, true=2年目以降
+            const [simulationMode, setSimulationMode] = useState('switch'); // 'switch' = 切り替え, 'new' = 新規導入
 
             // Current Drug State
             const [currentDrugId, setCurrentDrugId] = useState('nucala');
@@ -417,6 +418,27 @@
 
             const annualizedDiff = currentResult.annualSelfPay - targetResult.annualSelfPay;
 
+            // Calculate New Introduction (Year 1 vs Year 2+)
+            const newYear1Result = calculateCost(
+                targetOneTimeCost,
+                targetDrugCount,
+                period,
+                ageGroup,
+                incomeBracketId,
+                false, // majorityMode = false
+                false  // isExidencerTransition = false
+            );
+
+            const newYear2Result = calculateCost(
+                targetOneTimeCost,
+                targetDrugCount,
+                period,
+                ageGroup,
+                incomeBracketId,
+                true,  // majorityMode = true
+                false  // isExidencerTransition = false
+            );
+
 
 
             return (
@@ -446,6 +468,22 @@
                                     <Icon name="settings" className="w-4 h-4" />
                                     Configuration
                                 </h2>
+
+                                {/* Simulation Mode Toggle */}
+                                <div className="mb-8">
+                                    <div className="flex bg-slate-200/50 p-1.5 rounded-xl">
+                                        <button onClick={() => setSimulationMode('switch')}
+                                            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${simulationMode === 'switch' ? 'bg-white text-emerald-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}>
+                                            <Icon name="arrow-right-left" className="w-4 h-4" />
+                                            切り替え時の差額計算
+                                        </button>
+                                        <button onClick={() => setSimulationMode('new')}
+                                            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${simulationMode === 'new' ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700'}`}>
+                                            <Icon name="plus-circle" className="w-4 h-4" />
+                                            新規導入時の費用計算
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <div className="space-y-8">
 
@@ -496,57 +534,63 @@
                                                 </select>
                                             </div>
 
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-500 mb-2">適用期間</label>
-                                                <div className="flex bg-slate-100 p-1 rounded-lg">
-                                                    <button onClick={() => setIsMajority(false)}
-                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                                                        導入初年度
-                                                    </button>
-                                                    <button onClick={() => setIsMajority(true)}
-                                                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-                                                        2年目以降
-                                                    </button>
+                                            {simulationMode === 'switch' && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-500 mb-2">適用期間</label>
+                                                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                                                        <button onClick={() => setIsMajority(false)}
+                                                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                            導入初年度
+                                                        </button>
+                                                        <button onClick={() => setIsMajority(true)}
+                                                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMajority ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                                                            2年目以降
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </section>
 
                                     {/* Current Drug */}
-                                    <section>
-                                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 text-xs">現在の薬剤 (Before)</h3>
-                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-slate-500 mb-2">薬剤名</label>
-                                                <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
-                                                    value={currentDrugId}
-                                                    onChange={(e) => {
-                                                        const newId = e.target.value;
-                                                        setCurrentDrugId(newId);
-                                                        setCurrentDrugOptionIndex(0); // Reset option
-                                                    }}>
-                                                    {DRUG_DATA.filter(d => d.id !== 'exidencer').map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="grid grid-cols-1 gap-3">
+                                    {simulationMode === 'switch' && (
+                                        <section>
+                                            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3 text-xs">現在の薬剤 (Before)</h3>
+                                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
                                                 <div>
-                                                    <label className="block text-xs font-medium text-slate-500 mb-2">処方量/頻度</label>
+                                                    <label className="block text-xs font-medium text-slate-500 mb-2">薬剤名</label>
                                                     <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
-                                                        value={currentDrugOptionIndex}
-                                                        onChange={(e) => setCurrentDrugOptionIndex(parseInt(e.target.value))}>
-                                                        {currentDrug.options.map((opt, idx) => (
-                                                            <option key={idx} value={idx}>{opt.label}</option>
-                                                        ))}
+                                                        value={currentDrugId}
+                                                        onChange={(e) => {
+                                                            const newId = e.target.value;
+                                                            setCurrentDrugId(newId);
+                                                            setCurrentDrugOptionIndex(0); // Reset option
+                                                        }}>
+                                                        {DRUG_DATA.filter(d => d.id !== 'exidencer').map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                                     </select>
                                                 </div>
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-slate-500 mb-2">処方量/頻度</label>
+                                                        <select className="w-full text-sm p-2.5 bg-slate-50 border-slate-200 border rounded-lg focus:ring-2 focus:ring-slate-200 text-slate-700 outline-none"
+                                                            value={currentDrugOptionIndex}
+                                                            onChange={(e) => setCurrentDrugOptionIndex(parseInt(e.target.value))}>
+                                                            {currentDrug.options.map((opt, idx) => (
+                                                                <option key={idx} value={idx}>{opt.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </section>
+                                        </section>
+                                    )}
 
                                     {/* Target Drug */}
                                     <section>
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider text-xs">切替後の薬剤 (After)</h3>
+                                            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider text-xs">
+                                                {simulationMode === 'switch' ? '切替後の薬剤 (After)' : '導入予定の薬剤'}
+                                            </h3>
                                             <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">New</span>
                                         </div>
                                         <div className="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 space-y-4">
@@ -599,73 +643,129 @@
                                 )}
 
                                 {/* Hero Result */}
-                                <div className={`relative p-8 rounded-2xl mb-10 transition-all duration-300 ${annualizedDiff > 0 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'}`}>
-                                    <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
-                                        <div>
-                                            <p className={`text-sm font-medium mb-2 ${annualizedDiff > 0 ? 'text-slate-300' : 'text-slate-500'}`}>年間自己負担額の差額</p>
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-5xl md:text-6xl font-light tracking-tighter">
-                                                    {Math.abs(annualizedDiff).toLocaleString()}
-                                                </span>
-                                                <span className="text-lg font-light opacity-60">円</span>
+                                {simulationMode === 'switch' ? (
+                                    <div className={`relative p-8 rounded-2xl mb-10 transition-all duration-300 ${annualizedDiff > 0 ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-800'}`}>
+                                        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
+                                            <div>
+                                                <p className={`text-sm font-medium mb-2 ${annualizedDiff > 0 ? 'text-slate-300' : 'text-slate-500'}`}>年間自己負担額の差額</p>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-5xl md:text-6xl font-light tracking-tighter">
+                                                        {Math.abs(annualizedDiff).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-lg font-light opacity-60">円</span>
+                                                </div>
+                                            </div>
+
+                                            <div className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${annualizedDiff > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'}`}>
+                                                {annualizedDiff > 0 ? (
+                                                    <>
+                                                        <Icon name="trending-down" className="w-4 h-4" />
+                                                        {Math.abs(annualizedDiff).toLocaleString()}円 安くなります
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon name="trending-up" className="w-4 h-4" />
+                                                        {Math.abs(annualizedDiff).toLocaleString()}円 高くなります
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
-
-                                        <div className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${annualizedDiff > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'}`}>
-                                            {annualizedDiff > 0 ? (
-                                                <>
-                                                    <Icon name="trending-down" className="w-4 h-4" />
-                                                    {Math.abs(annualizedDiff).toLocaleString()}円 安くなります
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Icon name="trending-up" className="w-4 h-4" />
-                                                    {Math.abs(annualizedDiff).toLocaleString()}円 高くなります
-                                                </>
-                                            )}
+                                    </div>
+                                ) : (
+                                    <div className="relative p-8 rounded-2xl mb-10 bg-indigo-50 border border-indigo-100 text-slate-800">
+                                        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-6">
+                                            <div>
+                                                <p className="text-sm font-medium mb-2 text-indigo-700">導入1年目の年間自己負担額</p>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-4xl md:text-5xl font-light tracking-tighter text-indigo-900">
+                                                        {newYear1Result.annualSelfPay.toLocaleString()}
+                                                    </span>
+                                                    <span className="text-lg font-light text-indigo-700/60">円</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Comparison Table */}
                                 <div className="mb-8">
-                                    <div className="grid grid-cols-3 text-xs uppercase tracking-wider font-semibold text-slate-400 border-b border-slate-100 pb-2 mb-4">
-                                        <div>Item</div>
-                                        <div className="text-center">Current</div>
-                                        <div className="text-center text-emerald-600">New</div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
-                                            <div className="font-medium text-slate-700">年間自己負担額</div>
-                                            <div className="text-center text-xl font-light text-slate-600">{currentResult.annualSelfPay.toLocaleString()}円</div>
-                                            <div className="text-center text-xl font-bold text-emerald-600">{targetResult.annualSelfPay.toLocaleString()}円</div>
-                                        </div>
-
-
-
-                                        <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
-                                            <div className="text-sm font-medium text-slate-600">制度適用</div>
-                                            <div className="text-center">
-                                                {currentResult.isCapped ? (
-                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                        上限適用
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400">窓口負担のみ</span>
-                                                )}
+                                    {simulationMode === 'switch' ? (
+                                        <>
+                                            <div className="grid grid-cols-3 text-xs uppercase tracking-wider font-semibold text-slate-400 border-b border-slate-100 pb-2 mb-4">
+                                                <div>Item</div>
+                                                <div className="text-center">現在の薬剤</div>
+                                                <div className="text-center text-emerald-600">切替後の薬剤</div>
                                             </div>
-                                            <div className="text-center">
-                                                {targetResult.isCapped ? (
-                                                    <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                                        上限適用
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400">窓口負担のみ</span>
-                                                )}
+
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                                    <div className="font-medium text-slate-700">年間自己負担額</div>
+                                                    <div className="text-center text-xl font-light text-slate-600">{currentResult.annualSelfPay.toLocaleString()}円</div>
+                                                    <div className="text-center text-xl font-bold text-emerald-600">{targetResult.annualSelfPay.toLocaleString()}円</div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                                    <div className="text-sm font-medium text-slate-600">制度適用</div>
+                                                    <div className="text-center">
+                                                        {currentResult.isCapped ? (
+                                                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                上限適用
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-center">
+                                                        {targetResult.isCapped ? (
+                                                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                                上限適用
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-3 text-xs uppercase tracking-wider font-semibold text-slate-400 border-b border-slate-100 pb-2 mb-4">
+                                                <div>Item</div>
+                                                <div className="text-center">導入1年目</div>
+                                                <div className="text-center text-indigo-600">導入2年目以降</div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                                    <div className="font-medium text-slate-700">年間自己負担額</div>
+                                                    <div className="text-center text-xl font-light text-slate-600">{newYear1Result.annualSelfPay.toLocaleString()}円</div>
+                                                    <div className="text-center text-xl font-bold text-indigo-600">{newYear2Result.annualSelfPay.toLocaleString()}円</div>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 items-center py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors rounded-lg px-2">
+                                                    <div className="text-sm font-medium text-slate-600">制度適用</div>
+                                                    <div className="text-center">
+                                                        {newYear1Result.isCapped ? (
+                                                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                上限適用
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-center">
+                                                        {newYear2Result.isCapped ? (
+                                                            <span className="px-2 py-1 rounded text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                                上限適用
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400">窓口負担のみ</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col gap-6 mt-8">
